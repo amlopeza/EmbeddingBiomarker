@@ -1,0 +1,26 @@
+# Split + survival-head configuration.
+
+seed: 42
+
+split:
+  # 80/10/10 by PATIENT_ID, stratified by CANCER_TYPE x OS_STATUS.
+  train: 0.8
+  val: 0.1
+  test: 0.1
+  stratify: true
+  stratify_keys: [CANCER_TYPE, OS_STATUS]
+
+# Phase 0 tabular baseline (line to beat).
+baseline:
+  models: [coxph, rsf, xgboost_cox]
+  xgboost_cox:
+    objective: "survival:cox"
+    eval_metric: "cox-nloglik"
+    n_estimators: 500
+    max_depth: 3
+    learning_rate: 0.05
+    subsample: 0.8
+    colsample_bytree: 0.8
+
+metrics:
+  primary: c_index   # Harrell's concordance
