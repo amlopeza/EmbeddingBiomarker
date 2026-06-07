@@ -11,3 +11,5 @@ venv/
 data
 .venv/
 .DS_Store
+CLAUDE.md
+dev 
