@@ -1,0 +1,80 @@
+# Data layout and the canonical 12-feature survival context.
+# Single source of truth for prompts.py and the tabular baseline.
+# Verified against data/raw/msk_chord_2024/data_prompts.csv (N=23777).
+
+paths:
+  raw_csv: data/raw/msk_chord_2024/data_prompts.csv
+  interim: data/interim
+  processed: data/processed
+  results: results
+
+id_column: PATIENT_ID
+
+# Target — NEVER enters the prompt context (leakage guard in tests).
+target:
+  event_status: OS_STATUS    # "0:LIVING" / "1:DECEASED"
+  time_months: OS_MONTHS
+  event_positive_token: "1:DECEASED"
+
+# Used for stratified splitting (CANCER_TYPE x OS_STATUS).
+# Keeps both tumor mix and event rate comparable across train/val/test.
+strata:
+  cancer_type: CANCER_TYPE
+  os_status: OS_STATUS
+
+# The 12 prognostic context features.
+# label   -> human label rendered in the prompt
+# column  -> column in the raw CSV
+# kind    -> numeric | categorical | text_list
+features:
+  - label: "Mutations history"
+    column: MUTATIONS
+    kind: text_list
+  - label: "Age"
+    column: CURRENT_AGE_DEID
+    kind: numeric
+  - label: "Treatment history"
+    column: TREATMENT_HISTORY
+    kind: text_list
+  - label: "HER2"
+    column: HER2
+    kind: categorical
+  - label: "Cancer stage"
+    column: STAGE_HIGHEST_RECORDED
+    kind: categorical
+  - label: "Gender"
+    column: GENDER
+    kind: categorical
+  - label: "Smoking history"
+    column: SMOKING_PREDICTIONS_3_CLASSES
+    kind: categorical
+  - label: "History of PDL-1"
+    column: HISTORY_OF_PDL1
+    kind: categorical
+  - label: "Fraction Genome altered"
+    column: Fraction_Genome_Altered
+    kind: numeric
+  - label: "MSI Type"
+    column: MSI_Type
+    kind: categorical
+  - label: "Mutation Count"
+    column: Mutation_Count
+    kind: numeric
+  - label: "Number of tumor diagnoses (ICD-O)"
+    column: NUM_ICDO_DX
+    kind: numeric
+
+# Decision (confirmed): keep "Not available"/"Unknown" as an explicit category,
+# do NOT impute and do NOT drop the line. Missingness is itself signal.
+# Tokens here are only normalized to a canonical casing, not removed.
+missing_tokens:
+  - ""
+  - "NA"
+  - "NaN"
+  - "nan"
+  - "None"
+  - "null"
+
+# Casing fixes observed in the raw data (e.g. MSI_Type).
+normalize_casing:
+  "Do Not Report": "Do not report"
