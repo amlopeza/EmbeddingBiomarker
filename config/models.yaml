@@ -1,0 +1,22 @@
+# Extractor grid for Phase 1 (config-driven). Not used in Phase 0.
+# Embeddings are cached on disk by (model_id, prompt_hash); extract once, reuse.
+
+defaults:
+  max_length: 512        # keep consistent between fine-tuning and extraction
+  batch_size: 32
+  dtype: float16
+  pooling: mean          # mean | cls | last
+
+models:
+  - name: medcpt
+    hf_id: ncbi/MedCPT-Query-Encoder
+    pooling: mean
+  - name: smollm-135m
+    hf_id: HuggingFaceTB/SmolLM-135M
+    pooling: mean
+  - name: medgemma-4b
+    hf_id: google/medgemma-4b-it
+    pooling: mean
+  - name: llama-3.2-3b
+    hf_id: meta-llama/Llama-3.2-3B
+    pooling: mean
