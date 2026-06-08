@@ -78,3 +78,18 @@ missing_tokens:
 # Casing fixes observed in the raw data (e.g. MSI_Type).
 normalize_casing:
   "Do Not Report": "Do not report"
+
+# Prompt rendering. Instruction-tuned backbones (MedGemma, Llama-Instruct) embed
+# better with a natural-language framing than a flat "Label: value" list, so the
+# preamble is configurable here (single source of truth) and toggleable for
+# with/without ablations. The preamble is STATIC text — it must never contain the
+# target (OS_STATUS / OS_MONTHS). When include_preamble is false, prompts fall back
+# to the minimal inline format.
+# template_id identifies the rendered format and MUST be part of the embedding
+# cache key (model_id, template_id, prompt_hash) so different formats never mix.
+prompt:
+  include_preamble: true
+  instruction: "You are a helpful medical assistant. The following describes a cancer patient."
+  context_lead: "This is a cancer patient with the following characteristics:"
+  style: "bulleted"        # "bulleted" (one feature per line) | "inline" (joined with '. ')
+  template_id: "ctx_v1"
