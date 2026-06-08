@@ -16,6 +16,7 @@ authors = [{ name = "Ana María López" }]
 dependencies = [
     "pandas>=2.0",
     "numpy>=1.24",
+    "pyarrow>=14.0",
     "pyyaml>=6.0",
     "xgboost>=2.0",
     "scikit-survival>=0.22",
