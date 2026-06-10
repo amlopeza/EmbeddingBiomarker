@@ -13,6 +13,27 @@ split:
 # Phase 0 tabular baseline (line to beat).
 baseline:
   models: [coxph, rsf, xgboost_cox]
+
+  # Tabular featurization of the 12 context features. Every encoder is FIT ON
+  # TRAIN ONLY (top-K token vocabularies, one-hot categories, median imputation
+  # values) and applied unchanged to val/test — no leakage across the split.
+  features:
+    # text_list features (MUTATIONS, TREATMENT_HISTORY) -> count + multi-hot of
+    # the K most frequent tokens in the TRAIN fold.
+    top_k_mutations: 50
+    top_k_treatments: 30
+    # numeric features: median-impute and add a binary "was missing" indicator
+    # (missingness is signal, per config/data.yaml).
+    add_missing_indicator: true
+
+  coxph:
+    penalizer: 0.1        # ridge penalty; keeps the fit stable under one-hot collinearity
+  rsf:
+    n_estimators: 300
+    max_depth: 5
+    min_samples_leaf: 15
+    max_features: "sqrt"
+    n_jobs: -1
   xgboost_cox:
     objective: "survival:cox"
     eval_metric: "cox-nloglik"

@@ -13,3 +13,7 @@ data
 .DS_Store
 CLAUDE.md
 dev 
+# Python build artifacts
+*.egg-info/
+__pycache__/
+*.pyc
