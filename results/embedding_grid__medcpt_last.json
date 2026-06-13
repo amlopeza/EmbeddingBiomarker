@@ -1,0 +1,58 @@
+{
+  "model": "medcpt",
+  "template_id": "ctx_v1",
+  "pooling": "last",
+  "emb_dim": 768,
+  "n_patients": {
+    "train": 19022,
+    "val": 2378,
+    "test": 2377
+  },
+  "feature_sets": {
+    "emb": {
+      "n_features": 768,
+      "c_index": {
+        "val": 0.7121441082948324,
+        "test": 0.7189367010408712
+      },
+      "c_index_per_cancer_test": {
+        "Breast Cancer": 0.7444609913989606,
+        "Colorectal Cancer": 0.7142469286635444,
+        "Non-Small Cell Lung Cancer": 0.662501347770079,
+        "Pancreatic Cancer": 0.634587466731188,
+        "Prostate Cancer": 0.7719721960414703
+      },
+      "fit_seconds": 16.0
+    },
+    "tab": {
+      "n_features": 100,
+      "c_index": {
+        "val": 0.7477216827688908,
+        "test": 0.754940795911478
+      },
+      "c_index_per_cancer_test": {
+        "Breast Cancer": 0.7820715436282406,
+        "Colorectal Cancer": 0.7398628928256296,
+        "Non-Small Cell Lung Cancer": 0.7349177434640245,
+        "Pancreatic Cancer": 0.6493769658843455,
+        "Prostate Cancer": 0.7707351555136663
+      },
+      "fit_seconds": 0.9
+    },
+    "both": {
+      "n_features": 868,
+      "c_index": {
+        "val": 0.7444647205658869,
+        "test": 0.7552026771712185
+      },
+      "c_index_per_cancer_test": {
+        "Breast Cancer": 0.7769960186001277,
+        "Colorectal Cancer": 0.7483608226430463,
+        "Non-Small Cell Lung Cancer": 0.7222118183830164,
+        "Pancreatic Cancer": 0.6640454875393177,
+        "Prostate Cancer": 0.7966540999057493
+      },
+      "fit_seconds": 16.6
+    }
+  }
+}
