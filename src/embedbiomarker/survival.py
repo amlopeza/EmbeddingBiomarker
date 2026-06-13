@@ -117,6 +117,85 @@ def concordance(target: np.ndarray, risk: np.ndarray) -> float:
     return float(concordance_index_censored(event, time, risk)[0])
 
 
+def _percentile_ci(values: np.ndarray, ci: float) -> tuple[float, float]:
+    """Two-sided percentile interval (e.g. ci=0.95 -> [2.5, 97.5] percentiles)."""
+    alpha = (1.0 - ci) / 2.0
+    lo, hi = np.percentile(values, [100 * alpha, 100 * (1 - alpha)])
+    return float(lo), float(hi)
+
+
+def concordance_ci(
+    target: np.ndarray,
+    risk: np.ndarray,
+    n_boot: int = 1000,
+    ci: float = 0.95,
+    seed: int = 42,
+) -> dict:
+    """Bootstrap percentile CI for a single C-index, test set resampled, model fixed.
+
+    Resamples patients with replacement ``n_boot`` times and recomputes the
+    C-index on each resample. This captures uncertainty from the finite test
+    sample only — the fitted model (and thus ``risk``) is held constant.
+    """
+    rng = np.random.default_rng(seed)
+    n = len(risk)
+    boots = []
+    for _ in range(n_boot):
+        idx = rng.integers(0, n, size=n)
+        try:
+            boots.append(concordance(target[idx], risk[idx]))
+        except (ValueError, ZeroDivisionError):
+            continue  # degenerate resample with no admissible pairs; skip
+    boots = np.asarray(boots)
+    lo, hi = _percentile_ci(boots, ci)
+    return {
+        "point": concordance(target, risk),
+        "ci_low": lo,
+        "ci_high": hi,
+        "ci_level": ci,
+        "n_boot": int(boots.size),
+    }
+
+
+def concordance_delta_ci(
+    target: np.ndarray,
+    risk_a: np.ndarray,
+    risk_b: np.ndarray,
+    n_boot: int = 1000,
+    ci: float = 0.95,
+    seed: int = 42,
+) -> dict:
+    """PAIRED bootstrap CI for the C-index delta (b - a) on a fixed test set.
+
+    The same resampled patient indices are applied to both ``risk_a`` and
+    ``risk_b`` in every replicate, so the interval reflects the correlation
+    between the two scores (they share patients and, typically, features).
+    Use to test whether ``risk_b`` beats ``risk_a``: if ``ci_low`` > 0 the
+    improvement is significant at level ``ci``. ``p_gt0`` is the fraction of
+    replicates with delta > 0 (a one-sided bootstrap p-value is ``1 - p_gt0``).
+    """
+    rng = np.random.default_rng(seed)
+    n = len(risk_a)
+    deltas = []
+    for _ in range(n_boot):
+        idx = rng.integers(0, n, size=n)
+        try:
+            sub = target[idx]
+            deltas.append(concordance(sub, risk_b[idx]) - concordance(sub, risk_a[idx]))
+        except (ValueError, ZeroDivisionError):
+            continue
+    deltas = np.asarray(deltas)
+    lo, hi = _percentile_ci(deltas, ci)
+    return {
+        "point": concordance(target, risk_b) - concordance(target, risk_a),
+        "ci_low": lo,
+        "ci_high": hi,
+        "ci_level": ci,
+        "p_gt0": float(np.mean(deltas > 0)),
+        "n_boot": int(deltas.size),
+    }
+
+
 # --------------------------------------------------------------------------- #
 # Featurization
 # --------------------------------------------------------------------------- #

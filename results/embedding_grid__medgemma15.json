@@ -22,7 +22,14 @@
         "Pancreatic Cancer": 0.694289862085652,
         "Prostate Cancer": 0.7760367577756834
       },
-      "fit_seconds": 53.6
+      "fit_seconds": 51.5,
+      "c_index_ci_test": {
+        "point": 0.7503453597265691,
+        "ci_low": 0.7342935379622136,
+        "ci_high": 0.7660512839477498,
+        "ci_level": 0.95,
+        "n_boot": 1000
+      }
     },
     "tab": {
       "n_features": 100,
@@ -37,7 +44,14 @@
         "Pancreatic Cancer": 0.6493769658843455,
         "Prostate Cancer": 0.7707351555136663
       },
-      "fit_seconds": 0.9
+      "fit_seconds": 1.1,
+      "c_index_ci_test": {
+        "point": 0.754940795911478,
+        "ci_low": 0.7399446583571532,
+        "ci_high": 0.7699352337092906,
+        "ci_level": 0.95,
+        "n_boot": 1000
+      }
     },
     "both": {
       "n_features": 2660,
@@ -52,7 +66,32 @@
         "Pancreatic Cancer": 0.6879385434309219,
         "Prostate Cancer": 0.7875235626767201
       },
-      "fit_seconds": 51.9
+      "fit_seconds": 54.0,
+      "c_index_ci_test": {
+        "point": 0.7648654241652306,
+        "ci_low": 0.7492870441215225,
+        "ci_high": 0.7790863524103716,
+        "ci_level": 0.95,
+        "n_boot": 1000
+      }
+    }
+  },
+  "delta_vs_tab_test": {
+    "emb_minus_tab": {
+      "point": -0.004595436184908874,
+      "ci_low": -0.014589546035644836,
+      "ci_high": 0.0060807610309346356,
+      "ci_level": 0.95,
+      "p_gt0": 0.164,
+      "n_boot": 1000
+    },
+    "both_minus_tab": {
+      "point": 0.009924628253752621,
+      "ci_low": 0.003213152539308687,
+      "ci_high": 0.017160501008948673,
+      "ci_level": 0.95,
+      "p_gt0": 0.996,
+      "n_boot": 1000
     }
   }
 }

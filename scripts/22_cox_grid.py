@@ -57,6 +57,8 @@ def main() -> None:
     parser.add_argument("--survival-config", type=Path, default=REPO_ROOT / "config/survival.yaml")
     parser.add_argument("--splits", type=Path, default=REPO_ROOT / "data/interim/splits.json")
     parser.add_argument("--out", type=Path, default=None)
+    parser.add_argument("--n-boot", type=int, default=1000,
+                        help="paired bootstrap replicates for the test-set C-index CIs (0 = skip)")
     args = parser.parse_args()
 
     data_cfg = S.load_config(args.data_config)
@@ -90,18 +92,30 @@ def main() -> None:
 
     # --- fit + score -----------------------------------------------------
     results = {}
+    risk_test = {}  # per feature set, for the paired bootstrap below
     for name, X in feature_sets.items():
         t0 = time.time()
         model = build_model("xgboost_cox", bcfg).fit(X["train"], y["train"])
         scores = {p: S.concordance(y[p], model.predict_risk(X[p])) for p in ("val", "test")}
-        risk_test = model.predict_risk(X["test"])
+        risk_test[name] = model.predict_risk(X["test"])
         results[name] = {
             "n_features": X["train"].shape[1],
             "c_index": scores,
-            "c_index_per_cancer_test": _per_cancer(frames["test"], risk_test, data_cfg),
+            "c_index_per_cancer_test": _per_cancer(frames["test"], risk_test[name], data_cfg),
             "fit_seconds": round(time.time() - t0, 1),
         }
         print(f"  {name:5s} ({X['train'].shape[1]:4d} feat)  val={scores['val']:.4f}  test={scores['test']:.4f}")
+
+    # --- bootstrap CIs (test set resampled, models fixed) ----------------
+    deltas = {}
+    if args.n_boot > 0:
+        for name in feature_sets:
+            results[name]["c_index_ci_test"] = S.concordance_ci(
+                y["test"], risk_test[name], n_boot=args.n_boot)
+        # paired deltas vs the tabular bar: does the embedding add signal?
+        for name in ("emb", "both"):
+            deltas[f"{name}_minus_tab"] = S.concordance_delta_ci(
+                y["test"], risk_test["tab"], risk_test[name], n_boot=args.n_boot)
 
     # --- persist + verdict ----------------------------------------------
     payload = {
@@ -109,6 +123,7 @@ def main() -> None:
         "emb_dim": len(emb_cols),
         "n_patients": {p: len(frames[p]) for p in ("train", "val", "test")},
         "feature_sets": results,
+        "delta_vs_tab_test": deltas,
     }
     out = (args.out or (REPO_ROOT / f"results/embedding_grid__{args.model}.json")).resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -121,8 +136,24 @@ def main() -> None:
 
     tab_t, emb_t, both_t = (results[k]["c_index"]["test"] for k in ("tab", "emb", "both"))
     print(f"\nTest C-index — tab={tab_t:.4f}  emb={emb_t:.4f}  both={both_t:.4f}")
-    print(f"  embeddings vs tabular:   {emb_t - tab_t:+.4f}")
-    print(f"  complementarity (both-tab): {both_t - tab_t:+.4f}")
+    if args.n_boot > 0:
+        for k in ("tab", "emb", "both"):
+            ci = results[k]["c_index_ci_test"]
+            print(f"  {k:5s} {ci['point']:.4f}  [{ci['ci_low']:.4f}, {ci['ci_high']:.4f}]  ({int(ci['ci_level']*100)}% CI)")
+        for name, label in (("emb_minus_tab", "embeddings vs tabular"),
+                            ("both_minus_tab", "complementarity (both-tab)")):
+            d = deltas[name]
+            if d["ci_low"] > 0:
+                sig = "SIGNIFICANT better (CI > 0)"
+            elif d["ci_high"] < 0:
+                sig = "SIGNIFICANT worse (CI < 0)"
+            else:
+                sig = "not significant (CI includes 0)"
+            print(f"  {label}: {d['point']:+.4f}  [{d['ci_low']:+.4f}, {d['ci_high']:+.4f}]  "
+                  f"p(>0)={d['p_gt0']:.3f}  -> {sig}")
+    else:
+        print(f"  embeddings vs tabular:   {emb_t - tab_t:+.4f}")
+        print(f"  complementarity (both-tab): {both_t - tab_t:+.4f}")
 
 
 if __name__ == "__main__":
