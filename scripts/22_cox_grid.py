@@ -45,6 +45,24 @@ def _per_cancer(frame: pd.DataFrame, risk, data_cfg) -> dict:
     return out
 
 
+def _per_cancer_delta_ci(frame: pd.DataFrame, risk_a, risk_b, data_cfg, n_boot: int) -> dict:
+    """Paired bootstrap CI of the C-index delta (b - a) within each cancer stratum.
+
+    Same patients resampled for both scores per replicate (paired), restricted to
+    one tumour at a time. Tells whether the embedding's edge over tabular is real
+    where it matters most (e.g. pancreas) or just small-n noise. Skips strata with
+    < 5 events, as ``_per_cancer`` does.
+    """
+    out = {}
+    for ct, idx in frame.groupby(CANCER_COL).groups.items():
+        pos = frame.index.get_indexer(idx)
+        suby = S.make_target(frame.loc[idx], data_cfg)
+        if int(suby["event"].sum()) >= 5:
+            out[str(ct)] = S.concordance_delta_ci(
+                suby, risk_a[pos], risk_b[pos], n_boot=n_boot)
+    return out
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", default="medcpt")
@@ -108,6 +126,7 @@ def main() -> None:
 
     # --- bootstrap CIs (test set resampled, models fixed) ----------------
     deltas = {}
+    delta_per_cancer = {}
     if args.n_boot > 0:
         for name in feature_sets:
             results[name]["c_index_ci_test"] = S.concordance_ci(
@@ -116,6 +135,9 @@ def main() -> None:
         for name in ("emb", "both"):
             deltas[f"{name}_minus_tab"] = S.concordance_delta_ci(
                 y["test"], risk_test["tab"], risk_test[name], n_boot=args.n_boot)
+            # ... and per tumour: is the edge real where tabular is weakest?
+            delta_per_cancer[f"{name}_minus_tab"] = _per_cancer_delta_ci(
+                frames["test"], risk_test["tab"], risk_test[name], data_cfg, args.n_boot)
 
     # --- persist + verdict ----------------------------------------------
     payload = {
@@ -124,6 +146,7 @@ def main() -> None:
         "n_patients": {p: len(frames[p]) for p in ("train", "val", "test")},
         "feature_sets": results,
         "delta_vs_tab_test": deltas,
+        "delta_per_cancer_test": delta_per_cancer,
     }
     out = (args.out or (REPO_ROOT / f"results/embedding_grid__{args.model}.json")).resolve()
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -151,6 +174,11 @@ def main() -> None:
                 sig = "not significant (CI includes 0)"
             print(f"  {label}: {d['point']:+.4f}  [{d['ci_low']:+.4f}, {d['ci_high']:+.4f}]  "
                   f"p(>0)={d['p_gt0']:.3f}  -> {sig}")
+        print("\n  complementarity (both-tab) per cancer:")
+        for ct, d in sorted(delta_per_cancer["both_minus_tab"].items()):
+            flag = "*" if d["ci_low"] > 0 else (" " if d["ci_high"] > 0 else "-")
+            print(f"  {flag} {ct:30s} {d['point']:+.4f}  [{d['ci_low']:+.4f}, {d['ci_high']:+.4f}]  "
+                  f"p(>0)={d['p_gt0']:.3f}  (n_boot={d['n_boot']})")
     else:
         print(f"  embeddings vs tabular:   {emb_t - tab_t:+.4f}")
         print(f"  complementarity (both-tab): {both_t - tab_t:+.4f}")
