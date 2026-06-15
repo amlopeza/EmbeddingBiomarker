@@ -1,0 +1,183 @@
+{
+  "model": "medgemma15",
+  "pooling": "mean",
+  "template_id": "ctx_v1",
+  "tabular_vocab": {
+    "mutations_top_k": 50,
+    "treatments_top_k": 30
+  },
+  "coverage_per_cancer": {
+    "Breast Cancer": {
+      "n": 512,
+      "mutations": {
+        "mean_tokens_per_patient": 4.607421875,
+        "mean_oov_per_patient": 2.451171875,
+        "frac_tokens_oov": 0.5320050869012294,
+        "pct_patients_with_oov": 0.8203125
+      },
+      "treatments": {
+        "mean_tokens_per_patient": 4.021484375,
+        "mean_oov_per_patient": 1.15625,
+        "frac_tokens_oov": 0.2875182127246236,
+        "pct_patients_with_oov": 0.51171875,
+        "pct_patients_with_repeat": 0.267578125
+      }
+    },
+    "Colorectal Cancer": {
+      "n": 548,
+      "mutations": {
+        "mean_tokens_per_patient": 12.708029197080291,
+        "mean_oov_per_patient": 7.6916058394160585,
+        "frac_tokens_oov": 0.605255600229753,
+        "pct_patients_with_oov": 0.8923357664233577
+      },
+      "treatments": {
+        "mean_tokens_per_patient": 2.908759124087591,
+        "mean_oov_per_patient": 0.33394160583941607,
+        "frac_tokens_oov": 0.11480552070263488,
+        "pct_patients_with_oov": 0.2208029197080292,
+        "pct_patients_with_repeat": 0.17518248175182483
+      }
+    },
+    "Non-Small Cell Lung Cancer": {
+      "n": 742,
+      "mutations": {
+        "mean_tokens_per_patient": 8.221024258760108,
+        "mean_oov_per_patient": 4.8382749326145555,
+        "frac_tokens_oov": 0.5885245901639344,
+        "pct_patients_with_oov": 0.8611859838274932
+      },
+      "treatments": {
+        "mean_tokens_per_patient": 2.3086253369272236,
+        "mean_oov_per_patient": 0.46765498652291104,
+        "frac_tokens_oov": 0.2025685931115003,
+        "pct_patients_with_oov": 0.29245283018867924,
+        "pct_patients_with_repeat": 0.13611859838274934
+      }
+    },
+    "Pancreatic Cancer": {
+      "n": 294,
+      "mutations": {
+        "mean_tokens_per_patient": 4.41156462585034,
+        "mean_oov_per_patient": 1.7040816326530612,
+        "frac_tokens_oov": 0.38627602158828067,
+        "pct_patients_with_oov": 0.717687074829932
+      },
+      "treatments": {
+        "mean_tokens_per_patient": 3.3469387755102042,
+        "mean_oov_per_patient": 0.30952380952380953,
+        "frac_tokens_oov": 0.09247967479674797,
+        "pct_patients_with_oov": 0.22448979591836735,
+        "pct_patients_with_repeat": 0.19387755102040816
+      }
+    },
+    "Prostate Cancer": {
+      "n": 281,
+      "mutations": {
+        "mean_tokens_per_patient": 4.758007117437723,
+        "mean_oov_per_patient": 3.1352313167259784,
+        "frac_tokens_oov": 0.6589379207180255,
+        "pct_patients_with_oov": 0.8113879003558719
+      },
+      "treatments": {
+        "mean_tokens_per_patient": 3.02135231316726,
+        "mean_oov_per_patient": 1.291814946619217,
+        "frac_tokens_oov": 0.4275618374558304,
+        "pct_patients_with_oov": 0.5373665480427047,
+        "pct_patients_with_repeat": 0.2526690391459075
+      }
+    }
+  },
+  "gap_closure_per_cancer": {
+    "Breast Cancer": {
+      "enriched_minus_tab": {
+        "point": 0.002203446494240646,
+        "ci_low": -0.005371155285860696,
+        "ci_high": 0.009350109577355091,
+        "ci_level": 0.95,
+        "p_gt0": 0.708,
+        "n_boot": 1000
+      },
+      "both_minus_tab": {
+        "point": 0.012460869829498789,
+        "ci_low": -0.0062902511729434,
+        "ci_high": 0.03260323245299702,
+        "ci_level": 0.95,
+        "p_gt0": 0.889,
+        "n_boot": 1000
+      }
+    },
+    "Colorectal Cancer": {
+      "enriched_minus_tab": {
+        "point": 0.01144369782121768,
+        "ci_low": 0.0010362939790141247,
+        "ci_high": 0.021189619655434314,
+        "ci_level": 0.95,
+        "p_gt0": 0.983,
+        "n_boot": 1000
+      },
+      "both_minus_tab": {
+        "point": 0.009991176270956359,
+        "ci_low": -0.007860604239069459,
+        "ci_high": 0.02738229638008028,
+        "ci_level": 0.95,
+        "p_gt0": 0.853,
+        "n_boot": 1000
+      }
+    },
+    "Non-Small Cell Lung Cancer": {
+      "enriched_minus_tab": {
+        "point": 0.0009760692782194713,
+        "ci_low": -0.005150031558310902,
+        "ci_high": 0.00729146317232934,
+        "ci_level": 0.95,
+        "p_gt0": 0.61,
+        "n_boot": 1000
+      },
+      "both_minus_tab": {
+        "point": 0.00181594284319897,
+        "ci_low": -0.01113370379313605,
+        "ci_high": 0.01435995241127733,
+        "ci_level": 0.95,
+        "p_gt0": 0.631,
+        "n_boot": 1000
+      }
+    },
+    "Pancreatic Cancer": {
+      "enriched_minus_tab": {
+        "point": 0.009950399225744033,
+        "ci_low": 0.001310972271609299,
+        "ci_high": 0.018776457018950955,
+        "ci_level": 0.95,
+        "p_gt0": 0.991,
+        "n_boot": 1000
+      },
+      "both_minus_tab": {
+        "point": 0.03856157754657641,
+        "ci_low": 0.019956906439142053,
+        "ci_high": 0.05834934160291113,
+        "ci_level": 0.95,
+        "p_gt0": 1.0,
+        "n_boot": 1000
+      }
+    },
+    "Prostate Cancer": {
+      "enriched_minus_tab": {
+        "point": 0.003652214891611716,
+        "ci_low": -0.006056645036298959,
+        "ci_high": 0.014447753382176113,
+        "ci_level": 0.95,
+        "p_gt0": 0.747,
+        "n_boot": 1000
+      },
+      "both_minus_tab": {
+        "point": 0.016788407163053742,
+        "ci_low": -0.012126584658560959,
+        "ci_high": 0.04677619098331886,
+        "ci_level": 0.95,
+        "p_gt0": 0.877,
+        "n_boot": 1000
+      }
+    }
+  }
+}
