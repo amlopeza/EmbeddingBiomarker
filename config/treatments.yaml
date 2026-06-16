@@ -1,0 +1,67 @@
+# Per-cancer treatment taxonomy for the Phase 2 treatment-aware analysis.
+#
+# TREATMENT_HISTORY is a comma-separated, post-baseline, ordered list of agents
+# (with repeats). It is tokenized the same way as the tabular text_list features
+# (embedbiomarker.survival._tokenize -> stripped, UPPER-CASED agent names).
+#
+# Two stratum styles, chosen per tumor for clinical meaning (see plans.md):
+#   * mode: regimen  -> EXCLUSIVE arms, evaluated in priority order; first match
+#                       wins. Used for pancreas, where the clinical contrast is
+#                       WHICH chemo regimen (FOLFIRINOX vs gemcitabine-based).
+#   * mode: classes  -> NON-EXCLUSIVE binary flags; a patient can belong to
+#                       several (endocrine + CDK4/6 + chemo). Each flag asks
+#                       "among patients who received class X, does the LM risk
+#                       score rank survival?". Used for the other four tumors,
+#                       where therapies are routinely combined.
+#
+# A patient with zero agents is "untreated" (handled in code, not listed here).
+# Agents not covered by any rule fall into "other-treated" (regimen) or simply
+# set no class flag (classes). Coverage is the curated top agents per tumor; the
+# long tail is intentionally pooled, and that pooling is reported, not hidden.
+
+# --------------------------------------------------------------------------- #
+Pancreatic Cancer:
+  mode: regimen
+  # Priority order: FOLFIRINOX is defined by the oxaliplatin+irinotecan backbone
+  # (5-FU/leucovorin are shared with other regimens, so they don't define it).
+  # Checked before gemcitabine so a patient who had both over time is labeled by
+  # the more intensive backbone they received.
+  arms:
+    - name: FOLFIRINOX-like
+      require_all: [OXALIPLATIN, IRINOTECAN]
+    - name: gemcitabine-based
+      require_any: [GEMCITABINE]
+    - name: other-treated      # treated but neither backbone above
+      require_any: []          # empty -> matches any remaining treated patient
+
+# --------------------------------------------------------------------------- #
+Breast Cancer:
+  mode: classes
+  classes:
+    endocrine:    [LETROZOLE, ANASTROZOLE, EXEMESTANE, FULVESTRANT, TAMOXIFEN]
+    cdk4_6:       [PALBOCICLIB, ABEMACICLIB, RIBOCICLIB]
+    her2_targeted: [TRASTUZUMAB, PERTUZUMAB, ADO-TRASTUZUMAB EMTANSINE, FAM-TRASTUZUMAB DERUXTECAN-NXKI, LAPATINIB, NERATINIB, TUCATINIB]
+    chemo:        [PACLITAXEL, PACLITAXEL PROTEIN-BOUND, CAPECITABINE, DOXORUBICIN, CYCLOPHOSPHAMIDE, ERIBULIN, GEMCITABINE, CARBOPLATIN, DOCETAXEL, METHOTREXATE, FLUOROURACIL, EPIRUBICIN, VINORELBINE]
+
+# --------------------------------------------------------------------------- #
+Colorectal Cancer:
+  mode: classes
+  classes:
+    chemo_backbone: [FLUOROURACIL, LEUCOVORIN, OXALIPLATIN, IRINOTECAN, CAPECITABINE, FLOXURIDINE, TIPIRACIL-TRIFLURIDINE]
+    anti_vegf:      [BEVACIZUMAB, ZIV-AFLIBERCEPT, RAMUCIRUMAB, REGORAFENIB]
+    anti_egfr:      [CETUXIMAB, PANITUMUMAB]
+
+# --------------------------------------------------------------------------- #
+Non-Small Cell Lung Cancer:
+  mode: classes
+  classes:
+    platinum_chemo: [CARBOPLATIN, CISPLATIN, PEMETREXED, PACLITAXEL, PACLITAXEL PROTEIN-BOUND, DOCETAXEL, GEMCITABINE, VINORELBINE, ETOPOSIDE]
+    immunotherapy:  [PEMBROLIZUMAB, NIVOLUMAB, ATEZOLIZUMAB, DURVALUMAB, IPILIMUMAB, CEMIPLIMAB]
+    targeted_tki:   [OSIMERTINIB, ERLOTINIB, GEFITINIB, AFATINIB, ALECTINIB, CRIZOTINIB, BRIGATINIB, LORLATINIB, CERITINIB, DABRAFENIB, TRAMETINIB, SOTORASIB, CAPMATINIB]
+
+# --------------------------------------------------------------------------- #
+Prostate Cancer:
+  mode: classes
+  classes:
+    adt_hormonal: [LEUPROLIDE, DEGARELIX, GOSERELIN, BICALUTAMIDE, ABIRATERONE, ENZALUTAMIDE, DAROLUTAMIDE, APALUTAMIDE, FLUTAMIDE, NILUTAMIDE, RELUGOLIX]
+    chemo:        [DOCETAXEL, CABAZITAXEL]
