@@ -1,0 +1,112 @@
+{
+  "cohort": "NSCLC",
+  "model": "medgemma15",
+  "template_id": "ctx_v1",
+  "pooling": "mean",
+  "fit_on": "MSK train+val",
+  "external_n": 955,
+  "feature_sets": {
+    "tab": {
+      "n": 955,
+      "events": 569,
+      "concordance": 0.717988748285653,
+      "concordance_per_cancer": {
+        "Non-Small Cell Lung Cancer": {
+          "n": 955,
+          "concordance": 0.717988748285653
+        }
+      },
+      "cox_adjusted_hr": {
+        "hr_per_sd": 1.7616509760390795,
+        "ci_low": 1.5873099844351743,
+        "ci_high": 1.9551405785957774,
+        "p": 1.7456796787690576e-26,
+        "n": 955,
+        "events": 569
+      },
+      "km_intra_external_median": {
+        "logrank_p": 2.8763327561570065e-39,
+        "median_os": {
+          "high": 20.4276315789474,
+          "low": 58.6842105263158
+        },
+        "n": {
+          "high": 477,
+          "low": 478
+        },
+        "events": {
+          "high": 359,
+          "low": 210
+        }
+      },
+      "km_msk_reference_median": {
+        "logrank_p": 2.834726438394907e-23,
+        "median_os": {
+          "high": 28.9144736842105,
+          "low": 82.1381578947368
+        },
+        "n": {
+          "high": 703,
+          "low": 252
+        },
+        "events": {
+          "high": 473,
+          "low": 96
+        }
+      }
+    },
+    "both": {
+      "n": 955,
+      "events": 569,
+      "concordance": 0.6820131176702918,
+      "concordance_per_cancer": {
+        "Non-Small Cell Lung Cancer": {
+          "n": 955,
+          "concordance": 0.6820131176702918
+        }
+      },
+      "cox_adjusted_hr": {
+        "hr_per_sd": 1.4094522496563564,
+        "ci_low": 1.303328037662259,
+        "ci_high": 1.524217684769976,
+        "p": 8.472064341766347e-18,
+        "n": 955,
+        "events": 569
+      },
+      "km_intra_external_median": {
+        "logrank_p": 4.116514326271485e-18,
+        "median_os": {
+          "high": 22.5,
+          "low": 54.5394736842105
+        },
+        "n": {
+          "high": 477,
+          "low": 478
+        },
+        "events": {
+          "high": 318,
+          "low": 251
+        }
+      },
+      "km_msk_reference_median": {
+        "logrank_p": 3.5505744509939138e-06,
+        "median_os": {
+          "high": 36.25,
+          "low": 99.3092105263158
+        },
+        "n": {
+          "high": 891,
+          "low": 64
+        },
+        "events": {
+          "high": 547,
+          "low": 22
+        }
+      }
+    }
+  },
+  "msk_reference_median": {
+    "tab": 0.9982372522354126,
+    "both": 1.1202763319015503
+  }
+}

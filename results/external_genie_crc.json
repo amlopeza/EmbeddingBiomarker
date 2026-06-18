@@ -1,0 +1,112 @@
+{
+  "cohort": "CRC",
+  "model": "medgemma15",
+  "template_id": "ctx_v1",
+  "pooling": "mean",
+  "fit_on": "MSK train+val",
+  "external_n": 776,
+  "feature_sets": {
+    "tab": {
+      "n": 776,
+      "events": 386,
+      "concordance": 0.7137327351104074,
+      "concordance_per_cancer": {
+        "Colorectal Cancer": {
+          "n": 776,
+          "concordance": 0.7137327351104074
+        }
+      },
+      "cox_adjusted_hr": {
+        "hr_per_sd": 1.4271666229533186,
+        "ci_low": 1.2754153517829394,
+        "ci_high": 1.5969735402860512,
+        "p": 5.600965267170872e-10,
+        "n": 776,
+        "events": 386
+      },
+      "km_intra_external_median": {
+        "logrank_p": 1.3500569311907172e-23,
+        "median_os": {
+          "high": 33.421052631579,
+          "low": 75.4934210526316
+        },
+        "n": {
+          "high": 388,
+          "low": 388
+        },
+        "events": {
+          "high": 230,
+          "low": 156
+        }
+      },
+      "km_msk_reference_median": {
+        "logrank_p": 1.899569721589592e-24,
+        "median_os": {
+          "high": 33.2894736842105,
+          "low": 75.4934210526316
+        },
+        "n": {
+          "high": 379,
+          "low": 397
+        },
+        "events": {
+          "high": 227,
+          "low": 159
+        }
+      }
+    },
+    "both": {
+      "n": 776,
+      "events": 386,
+      "concordance": 0.7144541215800123,
+      "concordance_per_cancer": {
+        "Colorectal Cancer": {
+          "n": 776,
+          "concordance": 0.7144541215800123
+        }
+      },
+      "cox_adjusted_hr": {
+        "hr_per_sd": 1.479781439617572,
+        "ci_low": 1.3368105821039449,
+        "ci_high": 1.6380429197308581,
+        "p": 4.0477943464553364e-14,
+        "n": 776,
+        "events": 386
+      },
+      "km_intra_external_median": {
+        "logrank_p": 5.1650024142629655e-18,
+        "median_os": {
+          "high": 34.9013157894737,
+          "low": 72.2039473684211
+        },
+        "n": {
+          "high": 388,
+          "low": 388
+        },
+        "events": {
+          "high": 224,
+          "low": 162
+        }
+      },
+      "km_msk_reference_median": {
+        "logrank_p": 1.0916180204927743e-14,
+        "median_os": {
+          "high": 36.8092105263158,
+          "low": 72.2039473684211
+        },
+        "n": {
+          "high": 444,
+          "low": 332
+        },
+        "events": {
+          "high": 250,
+          "low": 136
+        }
+      }
+    }
+  },
+  "msk_reference_median": {
+    "tab": 0.9982372522354126,
+    "both": 1.1202763319015503
+  }
+}

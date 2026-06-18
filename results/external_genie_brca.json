@@ -1,0 +1,112 @@
+{
+  "cohort": "BrCa",
+  "model": "medgemma15",
+  "template_id": "ctx_v1",
+  "pooling": "mean",
+  "fit_on": "MSK train+val",
+  "external_n": 596,
+  "feature_sets": {
+    "tab": {
+      "n": 596,
+      "events": 345,
+      "concordance": 0.6825855470082232,
+      "concordance_per_cancer": {
+        "Breast Cancer": {
+          "n": 596,
+          "concordance": 0.6825855470082232
+        }
+      },
+      "cox_adjusted_hr": {
+        "hr_per_sd": 1.5633193779646215,
+        "ci_low": 1.3972279224090498,
+        "ci_high": 1.7491544781798312,
+        "p": 6.354757974185867e-15,
+        "n": 596,
+        "events": 345
+      },
+      "km_intra_external_median": {
+        "logrank_p": 2.8830215844095216e-13,
+        "median_os": {
+          "low": 113.388157894737,
+          "high": 57.796052631579
+        },
+        "n": {
+          "low": 298,
+          "high": 298
+        },
+        "events": {
+          "low": 156,
+          "high": 189
+        }
+      },
+      "km_msk_reference_median": {
+        "logrank_p": 1.994420394077522e-16,
+        "median_os": {
+          "low": 112.138157894737,
+          "high": 50.8552631578947
+        },
+        "n": {
+          "low": 381,
+          "high": 215
+        },
+        "events": {
+          "low": 208,
+          "high": 137
+        }
+      }
+    },
+    "both": {
+      "n": 596,
+      "events": 345,
+      "concordance": 0.6785592481715866,
+      "concordance_per_cancer": {
+        "Breast Cancer": {
+          "n": 596,
+          "concordance": 0.6785592481715866
+        }
+      },
+      "cox_adjusted_hr": {
+        "hr_per_sd": 1.6883251358189528,
+        "ci_low": 1.4998639843940322,
+        "ci_high": 1.9004668382578083,
+        "p": 4.225376282520196e-18,
+        "n": 596,
+        "events": 345
+      },
+      "km_intra_external_median": {
+        "logrank_p": 1.765240240771063e-13,
+        "median_os": {
+          "low": 114.934210526316,
+          "high": 60.1644736842105
+        },
+        "n": {
+          "low": 298,
+          "high": 298
+        },
+        "events": {
+          "low": 147,
+          "high": 198
+        }
+      },
+      "km_msk_reference_median": {
+        "logrank_p": 3.4507603780201824e-14,
+        "median_os": {
+          "low": 112.138157894737,
+          "high": 53.9802631578947
+        },
+        "n": {
+          "low": 370,
+          "high": 226
+        },
+        "events": {
+          "low": 193,
+          "high": 152
+        }
+      }
+    }
+  },
+  "msk_reference_median": {
+    "tab": 0.9982372522354126,
+    "both": 1.1202763319015503
+  }
+}

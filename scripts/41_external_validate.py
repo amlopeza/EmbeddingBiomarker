@@ -26,6 +26,12 @@ Inputs (must already exist):
 Usage:
     python scripts/41_external_validate.py                  # PANC pilot, medgemma15
     python scripts/41_external_validate.py --cohort PANC --model medgemma15 --pooling mean
+    python scripts/41_external_validate.py --all            # all 5 solid tumors (step 14.7)
+    python scripts/41_external_validate.py --cohort NSCLC CRC   # a subset
+
+The MSK frozen fit (featurizer + XGBoost-Cox, for both ``tab`` and ``both``) is
+identical across cohorts, so with ``--all`` it is computed ONCE and reused; only
+each cohort's external table + embeddings are loaded per iteration.
 """
 
 from __future__ import annotations
@@ -107,9 +113,62 @@ def _evaluate(ext: pd.DataFrame, risk_ext: np.ndarray, msk_median: float,
     }
 
 
+# 5 solid tumors of MSK-CHORD. BLADDER is excluded on purpose: it is not a
+# MSK-CHORD tumor, so the frozen model has no prior for it (see external.py).
+SOLID_TUMORS = ["PANC", "NSCLC", "CRC", "BrCa", "Prostate"]
+
+
+def run_cohort(cohort_name: str, frozen: list, ext: pd.DataFrame, ext_emb: pd.DataFrame,
+               emb_cols: list[str], data_cfg: dict, args, tid: str,
+               out: Path | None, out_patients: Path | None) -> dict:
+    """Apply the pre-fit frozen models to one external cohort; write JSON + parquet."""
+    cohort = cohort_name.lower()
+    results = {
+        "cohort": cohort_name,
+        "model": args.model,
+        "template_id": tid,
+        "pooling": args.pooling,
+        "fit_on": "MSK train+val",
+        "external_n": int(len(ext)),
+        "feature_sets": {},
+        "msk_reference_median": {},
+    }
+    target = S.make_target(ext, data_cfg)
+    patients = pd.DataFrame({
+        S.ID_COLUMN: ext[S.ID_COLUMN].to_numpy(),
+        CANCER_COL: ext[CANCER_COL].to_numpy(),
+        "os_months": target["time"].astype(float),
+        "event": target["event"].astype(int),
+    })
+    for name, use_emb, model, _fz, msk_median in frozen:
+        Xext = _matrix(ext, _fz, ext_emb, emb_cols, fit=False, use_emb=use_emb)
+        risk_ext = model.predict_risk(Xext)
+        patients[f"risk_{name}"] = risk_ext
+        results["msk_reference_median"][name] = msk_median
+        results["feature_sets"][name] = _evaluate(ext, risk_ext, msk_median, data_cfg)
+        c = results["feature_sets"][name]["concordance"]
+        print(f"  [{name:4s}] external C-index = {c:.4f}")
+
+    out = out or REPO_ROOT / f"results/external_genie_{cohort}.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(results, indent=2))
+    print(f"  wrote {out.relative_to(REPO_ROOT)}")
+
+    # Per-patient risk + survival (gitignored) so the figures notebook can draw KM
+    # curves without re-fitting — mirrors data/processed/treatment_oof_patients.parquet.
+    pat_out = out_patients or REPO_ROOT / f"data/processed/external_{cohort}_patients.parquet"
+    pat_out.parent.mkdir(parents=True, exist_ok=True)
+    patients.to_parquet(pat_out, index=False)
+    print(f"  wrote {pat_out.relative_to(REPO_ROOT)}: {len(patients)} patients")
+    return results
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--cohort", default="PANC")
+    ap.add_argument("--cohort", nargs="+", default=["PANC"],
+                    help="one or more cohorts (e.g. --cohort NSCLC CRC); ignored if --all")
+    ap.add_argument("--all", action="store_true",
+                    help=f"run all 5 solid tumors: {', '.join(SOLID_TUMORS)} (step 14.7)")
     ap.add_argument("--model", default="medgemma15")
     ap.add_argument("--pooling", default="mean")
     ap.add_argument("--template-id", default=None)
@@ -127,12 +186,19 @@ def main() -> None:
                          "default: data/processed/external_<cohort>_patients.parquet")
     args = ap.parse_args()
 
+    cohorts = SOLID_TUMORS if args.all else list(args.cohort)
+    if (args.out or args.out_patients) and len(cohorts) > 1:
+        raise SystemExit("--out/--out-patients are only valid for a single cohort")
+
     data_cfg = S.load_config(args.data_config)
     bcfg = S.load_config(args.survival_config)["baseline"]
-    cohort = args.cohort.lower()
     tid = args.template_id or str(pd.read_parquet(args.prompts)["template_id"].iloc[0])
 
-    # --- load MSK (train+val for the frozen fit) ----------------------------
+    def emb_file(prefix: str) -> Path:
+        stem = f"{args.model}__{tid}__{args.pooling}__by_patient.parquet"
+        return args.emb_dir / (f"{prefix}{stem}" if prefix else stem)
+
+    # --- load MSK (train+val) + MSK embeddings, FIT FROZEN MODELS ONCE -------
     msk = S.load_table(args.table)
     splits = S.load_splits(args.splits)
     trainval_ids = [*splits["train"], *splits["val"]]
@@ -140,75 +206,60 @@ def main() -> None:
         [i for i in trainval_ids if i in set(msk[S.ID_COLUMN])]
     ].reset_index()
 
-    # --- load external table -------------------------------------------------
-    ext_path = args.external_dir / f"genie_{cohort}.csv"
-    ext = S.load_table(ext_path)
-
-    # --- load embeddings (MSK + external), same (model, template, pooling) ---
-    def emb_file(prefix: str) -> Path:
-        stem = f"{args.model}__{tid}__{args.pooling}__by_patient.parquet"
-        return args.emb_dir / (f"{prefix}{stem}" if prefix else stem)
-
     msk_emb_path = emb_file("")
-    ext_emb_path = emb_file(f"genie_{cohort}__")
-    for p in (msk_emb_path, ext_emb_path):
-        if not p.exists():
-            raise SystemExit(
-                f"missing embeddings: {p}\n"
-                f"  run the Colab extractor and place the parquet under {args.emb_dir}/"
-            )
+    if not msk_emb_path.exists():
+        raise SystemExit(
+            f"missing MSK embeddings: {msk_emb_path}\n"
+            f"  place the Phase-1 parquet under {args.emb_dir}/"
+        )
     msk_emb = pd.read_parquet(msk_emb_path).set_index(S.ID_COLUMN)
-    ext_emb = pd.read_parquet(ext_emb_path).set_index(S.ID_COLUMN)
     emb_cols = A._emb_cols(msk_emb)
-    assert set(emb_cols) <= set(ext_emb.columns), "external embeddings missing e-columns"
 
-    print(f"MSK train+val: {len(trainval)} | external {args.cohort}: {len(ext)} | "
-          f"emb dims: {len(emb_cols)} | template: {tid}")
+    print(f"MSK train+val: {len(trainval)} | emb dims: {len(emb_cols)} | "
+          f"template: {tid} | cohorts: {', '.join(cohorts)}")
 
-    # --- fit frozen models, apply to external, evaluate (tab and both) -------
-    results = {
-        "cohort": args.cohort,
-        "model": args.model,
-        "template_id": tid,
-        "pooling": args.pooling,
-        "fit_on": "MSK train+val",
-        "external_n": int(len(ext)),
-        "feature_sets": {},
-        "msk_reference_median": {},
-    }
-    target = S.make_target(ext, data_cfg)
-    patients = pd.DataFrame({
-        S.ID_COLUMN: ext[S.ID_COLUMN].to_numpy(),
-        CANCER_COL: ext[CANCER_COL].to_numpy(),
-        "os_months": target["time"].astype(float),
-        "event": target["event"].astype(int),
-    })
+    # Fit featurizer + XGBoost-Cox for each feature set once; reuse across cohorts.
+    frozen = []  # (name, use_emb, model, featurizer, msk_reference_median)
     for name, use_emb in [("tab", False), ("both", True)]:
         model, fz = _fit_frozen(trainval, msk_emb, emb_cols, data_cfg, bcfg, use_emb=use_emb)
         # MSK reference median: median risk on the (in-sample) MSK fit data — a
         # transferable high/low threshold to test against the intra-external one.
         Xtv = _matrix(trainval, fz, msk_emb, emb_cols, fit=False, use_emb=use_emb)
         msk_median = float(np.median(model.predict_risk(Xtv)))
+        frozen.append((name, use_emb, model, fz, msk_median))
 
-        Xext = _matrix(ext, fz, ext_emb, emb_cols, fit=False, use_emb=use_emb)
-        risk_ext = model.predict_risk(Xext)
-        patients[f"risk_{name}"] = risk_ext
-        results["msk_reference_median"][name] = msk_median
-        results["feature_sets"][name] = _evaluate(ext, risk_ext, msk_median, data_cfg)
-        c = results["feature_sets"][name]["concordance"]
-        print(f"  [{name:4s}] external C-index = {c:.4f}")
+    # --- iterate over cohorts: load external table + embeddings, evaluate ----
+    summary = []
+    for cohort_name in cohorts:
+        cohort = cohort_name.lower()
+        ext_path = args.external_dir / f"genie_{cohort}.csv"
+        ext_emb_path = emb_file(f"genie_{cohort}__")
+        if not ext_path.exists():
+            print(f"[{cohort_name}] SKIP: missing table {ext_path.relative_to(REPO_ROOT)}")
+            continue
+        if not ext_emb_path.exists():
+            print(f"[{cohort_name}] SKIP: missing embeddings {ext_emb_path.name} "
+                  f"(run the Colab extractor)")
+            continue
+        ext = S.load_table(ext_path)
+        ext_emb = pd.read_parquet(ext_emb_path).set_index(S.ID_COLUMN)
+        # A patient embedded twice (identical prompt -> identical vector) would make
+        # emb.loc[ids] fan out and misalign with the feature matrix; keep one.
+        ext_emb = ext_emb[~ext_emb.index.duplicated(keep="first")]
+        assert set(emb_cols) <= set(ext_emb.columns), \
+            f"{cohort_name}: external embeddings missing e-columns"
+        print(f"[{cohort_name}] external n={len(ext)}")
+        res = run_cohort(cohort_name, frozen, ext, ext_emb, emb_cols, data_cfg, args,
+                         tid, args.out, args.out_patients)
+        summary.append((cohort_name, res["feature_sets"]["tab"]["concordance"],
+                        res["feature_sets"]["both"]["concordance"]))
 
-    out = args.out or REPO_ROOT / f"results/external_genie_{cohort}.json"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(results, indent=2))
-    print(f"Wrote {out.relative_to(REPO_ROOT)}")
-
-    # Per-patient risk + survival (gitignored) so the figures notebook can draw KM
-    # curves without re-fitting — mirrors data/processed/treatment_oof_patients.parquet.
-    pat_out = args.out_patients or REPO_ROOT / f"data/processed/external_{cohort}_patients.parquet"
-    pat_out.parent.mkdir(parents=True, exist_ok=True)
-    patients.to_parquet(pat_out, index=False)
-    print(f"Wrote {pat_out.relative_to(REPO_ROOT)}: {len(patients)} patients")
+    if not summary:
+        raise SystemExit("no cohort produced results (missing tables/embeddings)")
+    print("\nSummary (external C-index):")
+    print(f"  {'cohort':10s} {'tab':>8s} {'both':>8s} {'Δ':>8s}")
+    for name, c_tab, c_both in summary:
+        print(f"  {name:10s} {c_tab:8.4f} {c_both:8.4f} {c_both - c_tab:+8.4f}")
 
 
 if __name__ == "__main__":

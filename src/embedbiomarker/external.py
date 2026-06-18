@@ -198,7 +198,11 @@ def build_genie_table(
     df = df.merge(_mutations(cbio), on="PATIENT_ID", how="left")
 
     # 3. Survival target (token identical to MSK: "1:DECEASED" / "0:LIVING").
+    #    Some cohorts list a patient twice in the supp survival file (e.g. CRC
+    #    GENIE-VICC-382607 has two identical OS rows); dedup before the merge so
+    #    one patient never fans out to multiple feature rows.
     surv = _read_cbio(cbio / SURVIVAL_SUPP)
+    surv = surv.drop_duplicates(subset="PATIENT_ID", keep="first")
     df = df.merge(
         surv[["PATIENT_ID", "OS_STATUS", "OS_MONTHS"]], on="PATIENT_ID", how="left"
     )

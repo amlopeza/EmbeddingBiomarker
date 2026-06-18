@@ -11,6 +11,8 @@ venv/
 data
 .venv/
 .DS_Store
+._.DS_Store
+._*
 CLAUDE.md
 dev 
 # Python build artifacts
