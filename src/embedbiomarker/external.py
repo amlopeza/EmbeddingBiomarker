@@ -43,10 +43,15 @@ TIMELINE_TREATMENT = "data_timeline_treatment.txt"
 MUTATIONS = "data_mutations_extended.txt"
 
 # Cohort folder -> the MSK-CHORD CANCER_TYPE value it must match for per-tumor
-# reporting. PANC is verified ("Pancreatic Cancer"); the rest are filled in /
-# verified against the MSK table when Phase 3 scales out (step 14.7).
+# reporting. All five solid tumors verified against build_patient_table()'s
+# CANCER_TYPE vocabulary. BLADDER is intentionally absent: it is not a MSK-CHORD
+# tumor, so the frozen model has no prior for it.
 COHORT_CANCER_TYPE = {
     "PANC": "Pancreatic Cancer",
+    "NSCLC": "Non-Small Cell Lung Cancer",
+    "CRC": "Colorectal Cancer",
+    "BrCa": "Breast Cancer",
+    "Prostate": "Prostate Cancer",
 }
 
 # Centers whose patients are dropped (leakage: also in MSK-CHORD train).
