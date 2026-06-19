@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Phase 1 — interpretability of the pancreas complementarity (step 13a).
+"""Phase 1 — interpretability of the pancreas complementarity.
 
 MedGemma embeddings add a real, significant edge over the 12 tabular features
 ONLY in pancreas (+0.0386, CI [+0.0200, +0.0583]). This probe asks WHY: what does

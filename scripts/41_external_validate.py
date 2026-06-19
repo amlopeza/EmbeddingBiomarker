@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Frozen-model external validation on GENIE BPC (Phase 3, step 14.5).
+"""Frozen-model external validation on GENIE BPC (Phase 3).
 
 Principle: ZERO refit. The TabularFeaturizer and the XGBoost-Cox head are fit on
 MSK-CHORD (train+val, decision D1) and applied UNCHANGED to the external cohort —
@@ -10,7 +10,7 @@ guard against, unlike the in-cohort Phase 2 OOF risk).
 For each feature set (``tab`` = the 12 features only; ``both`` = tab + MedGemma
 embeddings) it reports on the external cohort:
   * C-index, global and per CANCER_TYPE (concordance is rank-based -> robust to a
-    uniform OS time-origin shift between cohorts; see caveat 2 in plans.md).
+    uniform OS time-origin shift between cohorts; see decisions.md).
   * KM medians + log-rank for high/low risk at TWO cutpoints (decision D2):
       - intra-external median (pure discrimination within the external cohort), and
       - the MSK reference median (does the MSK-learned threshold transfer?).
@@ -26,7 +26,7 @@ Inputs (must already exist):
 Usage:
     python scripts/41_external_validate.py                  # PANC pilot, medgemma15
     python scripts/41_external_validate.py --cohort PANC --model medgemma15 --pooling mean
-    python scripts/41_external_validate.py --all            # all 5 solid tumors (step 14.7)
+    python scripts/41_external_validate.py --all            # all 5 solid tumors
     python scripts/41_external_validate.py --cohort NSCLC CRC   # a subset
 
 The MSK frozen fit (featurizer + XGBoost-Cox, for both ``tab`` and ``both``) is
@@ -168,7 +168,7 @@ def main() -> None:
     ap.add_argument("--cohort", nargs="+", default=["PANC"],
                     help="one or more cohorts (e.g. --cohort NSCLC CRC); ignored if --all")
     ap.add_argument("--all", action="store_true",
-                    help=f"run all 5 solid tumors: {', '.join(SOLID_TUMORS)} (step 14.7)")
+                    help=f"run all 5 solid tumors: {', '.join(SOLID_TUMORS)}")
     ap.add_argument("--model", default="medgemma15")
     ap.add_argument("--pooling", default="mean")
     ap.add_argument("--template-id", default=None)

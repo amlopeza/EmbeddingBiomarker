@@ -1,6 +1,6 @@
 """Phase 2 — treatment-aware survival analysis.
 
-The Phase 1 finding (paso 13a) is that the MedGemma embedding adds genuine,
+The Phase 1 finding is that the MedGemma embedding adds genuine,
 *semantic* prognostic signal over the 12 tabular features, concentrated in
 pancreas. Phase 2 asks the clinical question that is the paper's headline: the
 LM-extracted risk score — is it **prognostic** (it ranks survival regardless of

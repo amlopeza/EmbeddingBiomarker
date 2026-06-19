@@ -6,7 +6,7 @@ produces, so the MSK-fit :class:`~embedbiomarker.survival.TabularFeaturizer` and
 prompt renderer run on it UNCHANGED — that is the whole point of frozen-model
 external validation: no re-fitting, only ``transform`` / ``predict_risk``.
 
-Differences from MSK-CHORD, handled here (decisions logged in plans.md, step 14.0):
+Differences from MSK-CHORD, handled here (schema-mapping decisions in decisions.md):
   * PATIENT_ID barcode is 3 segments (``GENIE-DFCI-136491``), not 2 (``P-0000001``).
   * Leakage filter: MSK contributes to BOTH MSK-CHORD (train) and GENIE BPC, so
     patients from ``exclude_centers`` (MSK) are dropped — validate only on unseen
@@ -58,7 +58,7 @@ COHORT_CANCER_TYPE = {
 DEFAULT_EXCLUDE_CENTERS = ("MSK",)
 
 # --- Agent normalization (BPC -> MSK vocabulary, tabular branch only) -------- #
-# 0 exact matches BPC<->MSK (step 14.0): MSK is UPPERCASE + simple name, BPC is
+# 0 exact matches BPC<->MSK: MSK is UPPERCASE + simple name, BPC is
 # Title-Case + salt suffix. upper() fixes most; this dict handles the rest.
 AGENT_RENAME = {
     "GEMCITABINE HCL": "GEMCITABINE",

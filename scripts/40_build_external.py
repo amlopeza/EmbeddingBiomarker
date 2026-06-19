@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """Build the external GENIE BPC cohort table + prompts for frozen-model validation.
 
-Phase 3, steps 14.2 + 14.3 in one pass (they share the same cohort):
+Phase 3: it builds the external cohort table and its prompts in one pass (they
+share the same cohort):
   1. ``embedbiomarker.external.build_genie_table(cohort)`` -> the 12-feature table
      in MSK-CHORD schema, non-MSK centers only -> ``data/interim/genie_<cohort>.csv``.
   2. ``embedbiomarker.prompts.build_prompts`` with the SAME ``config/data.yaml``

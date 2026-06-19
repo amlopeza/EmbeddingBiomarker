@@ -2,8 +2,13 @@
 # Single source of truth for prompts.py and the tabular baseline.
 # Verified against data/raw/msk_chord_2024/data_prompts.csv (N=23777).
 
+# Canonical data layout. IMPORTANT: data_prompts.csv is a DERIVED table written
+# to data/interim/ by scripts/00_build_table.py — it is NOT a raw cBioPortal file
+# (do not place it under data/raw/). The true raw inputs are the four cBioPortal
+# MSK-CHORD files under raw_dir; see embedbiomarker.data for the build steps.
 paths:
-  raw_csv: data/raw/msk_chord_2024/data_prompts.csv
+  raw_dir: data/raw/msk_chord_2024              # the 4 raw cBioPortal MSK-CHORD files
+  patient_table: data/interim/data_prompts.csv  # DERIVED by scripts/00_build_table.py
   interim: data/interim
   processed: data/processed
   results: results

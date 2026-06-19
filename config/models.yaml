@@ -1,5 +1,21 @@
 # Extractor grid for Phase 1 (config-driven). Not used in Phase 0.
-# Embeddings are cached on disk by (model_id, prompt_hash); extract once, reuse.
+# Embeddings are cached on disk by (model_id, template_id, prompt_hash); extract
+# once, reuse across the whole grid and across cohorts.
+#
+# PRIMARY EXTRACTOR (the one behind the reported results): **MedGemma-1.5-4B**
+# (`google/medgemma-1.5-4b-it`, tag `medgemma15`, 2560-d, masked-mean pooling).
+# It is the only off-the-shelf extractor that BEATS the tabular baseline
+# (C-index 0.7549) and ADDS complementary signal on top of the 12 features
+# (`both` = 0.7649, +0.0099, bootstrap CI excludes 0). It is the model used for
+# BOTH the Phase 1 internal grid and the Phase 3 frozen-model external validation.
+# Extraction is done on a GPU (Colab T4) via the notebooks under `notebooks/`:
+#   - notebooks/21_extract_embeddings_phase1.ipynb   (MSK-CHORD, internal: MedCPT + MedGemma)
+#   - notebooks/42_extract_embeddings_external.ipynb (GENIE BPC, external: MedGemma)
+# The other entries are extractor-grid candidates. NOTE: not all were run —
+# only MedCPT was actually extracted and scored (it did NOT beat the baseline,
+# see decisions.md). SmolLM-135M and Llama-3.2-3B remain in the grid as
+# candidates but have not been evaluated; SmolLM-135M is also the model earmarked
+# for the optional Phase A fine-tuning.
 
 defaults:
   max_length: 512        # keep consistent between fine-tuning and extraction
@@ -8,15 +24,29 @@ defaults:
   pooling: mean          # mean | cls | last
 
 models:
+  # --- Primary extractor (headline Phase 1 + Phase 3 results) --------------- #
+  - name: medgemma15
+    hf_id: google/medgemma-1.5-4b-it
+    pooling: mean
+    dtype: bfloat16      # MedGemma runs in bf16 on the T4
+    dim: 2560
+    primary: true        # the extractor used for the reported results
+    note: >-
+      Multimodal wrapper: pool the TEXT backbone's last_hidden_state with a
+      masked mean (see the extraction notebooks), not the multimodal head.
+
+  # --- Evaluated probe: extracted + scored, did NOT beat the 0.7549 baseline -- #
   - name: medcpt
     hf_id: ncbi/MedCPT-Query-Encoder
     pooling: mean
+    evaluated: true        # emb-only ~0.718; no complementarity (see decisions.md)
+
+  # --- Grid candidates: NOT yet extracted/evaluated ------------------------- #
   - name: smollm-135m
     hf_id: HuggingFaceTB/SmolLM-135M
     pooling: mean
-  - name: medgemma-4b
-    hf_id: google/medgemma-4b-it
-    pooling: mean
+    evaluated: false       # also the candidate for the optional Phase A fine-tuning
   - name: llama-3.2-3b
     hf_id: meta-llama/Llama-3.2-3B
     pooling: mean
+    evaluated: false

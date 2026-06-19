@@ -4,7 +4,7 @@
 # (with repeats). It is tokenized the same way as the tabular text_list features
 # (embedbiomarker.survival._tokenize -> stripped, UPPER-CASED agent names).
 #
-# Two stratum styles, chosen per tumor for clinical meaning (see plans.md):
+# Two stratum styles, chosen per tumor for clinical meaning (see decisions.md):
 #   * mode: regimen  -> EXCLUSIVE arms, evaluated in priority order; first match
 #                       wins. Used for pancreas, where the clinical contrast is
 #                       WHICH chemo regimen (FOLFIRINOX vs gemcitabine-based).
