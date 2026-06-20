@@ -1,6 +1,8 @@
 # Data layout and the canonical 12-feature survival context.
 # Single source of truth for prompts.py and the tabular baseline.
-# Verified against data/raw/msk_chord_2024/data_prompts.csv (N=23777).
+# Verified against the DERIVED table data/interim/data_prompts.csv (N=23777),
+# which scripts/00_build_table.py rebuilds from the raw cBioPortal files in
+# data/raw/msk_chord_2024/ (data_prompts.csv is NOT a raw file).
 
 # Canonical data layout. IMPORTANT: data_prompts.csv is a DERIVED table written
 # to data/interim/ by scripts/00_build_table.py — it is NOT a raw cBioPortal file

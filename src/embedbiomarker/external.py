@@ -11,9 +11,11 @@ Differences from MSK-CHORD, handled here (schema-mapping decisions in decisions.
   * Leakage filter: MSK contributes to BOTH MSK-CHORD (train) and GENIE BPC, so
     patients from ``exclude_centers`` (MSK) are dropped — validate only on unseen
     institutions (DFCI / UHN / VICC).
-  * Agent vocabulary differs (BPC Title-Case + salt suffix vs MSK UPPERCASE); the
-    tabular branch needs them normalized to the MSK form. The embedding branch
-    consumes the raw text and does not.
+  * Agent vocabulary differs (BPC Title-Case + salt suffix vs MSK UPPERCASE), so
+    agents are normalized to the MSK form. The normalization is applied once when
+    building the table, so BOTH branches see the normalized names (the tabular
+    multi-hot needs it; the prompt/embedding then inherits the same table) — this
+    keeps the external prompts apples-to-apples with the MSK ones.
   * Several MSK features have no BPC source. They are set to MSK's OWN missing
     token per feature (``Not available`` / ``Unknown`` / NaN) so they land on the
     correct one-hot column instead of silently collapsing to the dropped reference

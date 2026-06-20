@@ -256,16 +256,45 @@ def _design(frame: pd.DataFrame, risk: np.ndarray, data_cfg: dict) -> pd.DataFra
     return d[keep + ["_t", "_e"]]
 
 
+def _fit_cox_robust(d: pd.DataFrame, penalizer: float):
+    """Fit a Cox model, preferring no penalty so the HR/CI/p are valid inference.
+
+    A ridge penalty (``penalizer>0``) biases coefficients toward 0 and invalidates
+    the Wald CI / p-value, so by default (``penalizer=0.0``) we report the
+    unpenalized fit. Only if the unpenalized fit fails to converge do we fall back
+    to a small ridge purely to keep the term reportable — and the returned
+    ``penalizer`` field records that, so penalized (non-inferential) estimates are
+    never passed off as clean ones. Returns ``(cph, penalizer_used)`` or
+    ``(None, None)``.
+    """
+    try:
+        cph = CoxPHFitter(penalizer=penalizer)
+        cph.fit(d, duration_col="_t", event_col="_e")
+        return cph, penalizer
+    except Exception:
+        if penalizer == 0.0:
+            try:
+                cph = CoxPHFitter(penalizer=0.1)
+                cph.fit(d, duration_col="_t", event_col="_e")
+                return cph, 0.1
+            except Exception:
+                return None, None
+        return None, None
+
+
 def cox_adjusted_hr(frame: pd.DataFrame, risk: np.ndarray, data_cfg: dict,
-                    penalizer: float = 0.1) -> dict | None:
-    """HR of the risk score PER SD, adjusted for age + stage. None if it can't fit."""
+                    penalizer: float = 0.0) -> dict | None:
+    """HR of the risk score PER SD, adjusted for age + stage. None if it can't fit.
+
+    Unpenalized by default so the HR/CI/p are valid inference (see
+    :func:`_fit_cox_robust`); ``penalizer`` records whether a stability fallback
+    was needed.
+    """
     d = _design(frame, risk, data_cfg)
     if "risk_z" not in d.columns or int(d["_e"].sum()) < 5:
         return None
-    cph = CoxPHFitter(penalizer=penalizer)
-    try:
-        cph.fit(d, duration_col="_t", event_col="_e")
-    except Exception:
+    cph, pen_used = _fit_cox_robust(d, penalizer)
+    if cph is None:
         return None
     s = cph.summary.loc["risk_z"]
     return {
@@ -275,17 +304,25 @@ def cox_adjusted_hr(frame: pd.DataFrame, risk: np.ndarray, data_cfg: dict,
         "p": float(s["p"]),
         "n": int(len(d)),
         "events": int(d["_e"].sum()),
+        "penalizer": float(pen_used),
     }
 
 
 def cox_interaction(frame: pd.DataFrame, risk: np.ndarray, treat_binary: np.ndarray,
-                    data_cfg: dict, penalizer: float = 0.1) -> dict | None:
+                    data_cfg: dict, penalizer: float = 0.0) -> dict | None:
     """Cox: risk + treatment + risk×treatment + age + stage.
 
     ``treat_binary`` is a 0/1 indicator (received a given regimen/class). The
     risk×treatment term tests effect modification: a significant interaction is
     the "predictive" signal, a null one means the score is purely prognostic.
-    Returns the interaction term stats, or None if it degenerates.
+    Unpenalized by default for valid inference; the returned ``penalizer`` records
+    whether a stability fallback was needed (small treated arms may not converge
+    unpenalized). Returns the interaction term stats, or None if it degenerates.
+
+    CAVEAT (circularity): the risk score is trained on features that INCLUDE
+    treatment history (tabular multi-hot + the prompt embedding), so a risk×treatment
+    interaction is partly mechanical. Read as an exploratory effect-modification
+    probe, not a clean predictive test.
     """
     d = _design(frame, risk, data_cfg).copy()
     t = np.asarray(treat_binary, float)
@@ -295,10 +332,8 @@ def cox_interaction(frame: pd.DataFrame, risk: np.ndarray, treat_binary: np.ndar
     d.insert(0, "risk_x_trt", d["risk_z"].to_numpy() * t)
     if float(d["risk_x_trt"].std(ddof=0)) == 0.0:
         return None
-    cph = CoxPHFitter(penalizer=penalizer)
-    try:
-        cph.fit(d, duration_col="_t", event_col="_e")
-    except Exception:
+    cph, pen_used = _fit_cox_robust(d, penalizer)
+    if cph is None:
         return None
     s = cph.summary.loc["risk_x_trt"]
     return {
@@ -308,4 +343,5 @@ def cox_interaction(frame: pd.DataFrame, risk: np.ndarray, treat_binary: np.ndar
         "p": float(s["p"]),
         "n_treated": int(t.sum()),
         "n": int(len(d)),
+        "penalizer": float(pen_used),
     }

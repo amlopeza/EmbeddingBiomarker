@@ -86,8 +86,8 @@ python scripts/22_cox_grid.py --model medgemma15 --pooling mean --n-boot 1000 \
 ```
 
 **Result — of the extractors evaluated (MedGemma and MedCPT), MedGemma-1.5-4B
-(2560-d, masked-mean) is the only one that beats the baseline and adds
-complementary signal:**
+(2560-d, masked-mean) is the only one whose combined model (emb ⊕ tab) beats the
+baseline and adds complementary signal (embeddings alone stay below the bar):**
 
 | Feature set | Test C-index | Δ vs tabular |
 |---|---:|---:|
@@ -112,19 +112,29 @@ python scripts/30_treatment_analysis.py --reuse-risk   # re-run stats without re
 A cross-fit produces an out-of-fold risk score per patient (pan-cancer
 C=0.7556, cancer-specific C=0.7544). The LM-derived risk is a **robust
 prognostic factor in all 5 tumors** and within every therapy stratum (log-rank
-p ≪ 1e-10), adjusted for age + stage:
+p ≪ 1e-10). Adjusted HR per +1 SD of risk (age + stage adjusted, **unpenalized**
+Cox so the CI/p are valid inference):
 
-| Tumor | adjusted HR per SD |
+| Tumor | adjusted HR per SD [95% CI] |
 |---|---:|
-| Breast | 2.43 |
-| Prostate | 2.31 |
-| Colorectal | 1.80 |
-| NSCLC | 1.77 |
-| Pancreas | 1.68 |
+| Breast | 3.79 [3.56, 4.04] |
+| Prostate | 3.50 [3.22, 3.80] |
+| Colorectal | 2.22 [2.10, 2.33] |
+| NSCLC | 2.08 [2.00, 2.16] |
+| Pancreas | 1.93 [1.81, 2.05] |
 
-A **risk × treatment interaction** term separates prognostic from predictive
-signal: untreated strata give interaction HR ≈ 1 (pure prognosis), treated
-strata > 1 (effect modification). Figures: `notebooks/30_treatment_figures.ipynb`.
+(all p ≤ 1e-97.)
+
+A **risk × treatment interaction** term probes prognostic vs predictive signal,
+evaluated **case by case (per tumor)** and read as **exploratory**. Each tumor is
+a separate population with its own therapies — the interactions are not pooled
+into one joint claim across experiments, so they are not corrected as a single
+multiple-testing family (the cancer-specific score is the primary lens; the
+pan-cancer score is a robustness comparison). It is also partly **circular**: the
+risk score is trained on features that already include treatment history.
+Empirically, untreated strata give interaction HR ≈ 1 (pure prognosis) in 4 of 5
+tumors (NSCLC the exception); treated strata > 1 (effect modification). Figures:
+`notebooks/30_treatment_figures.ipynb`.
 
 ## Phase 3 — External validation (frozen model, zero retraining)
 
@@ -152,8 +162,10 @@ retraining). Internal (MSK test) vs external (GENIE BPC, frozen):
 | NSCLC | 955 | 0.7367 | 0.7180 | 0.6820 | −0.0360 |
 
 The embedding's contribution is positive and consistent where Phase 1 predicted
-it (pancreas, prostate), neutral in colorectal/breast, and negative in NSCLC
-(candidate caveat: divergent gene panels → OOV). Figures:
+it (pancreas, prostate), neutral in colorectal/breast, and negative in NSCLC.
+The cause is open: prompt truncation was measured and ruled out (median ~125
+tokens, <0.2% hit the 512 cap), so a candidate but **untested** explanation is
+divergent gene panels → more out-of-vocabulary tokens. Figures:
 `notebooks/40_external_figures.ipynb`, `notebooks/41_external_forest.ipynb`.
 
 ## Repository structure

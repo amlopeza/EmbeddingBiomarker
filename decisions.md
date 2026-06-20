@@ -145,9 +145,28 @@ unchanged; it only stabilizes the reported HRs.
 **Separate prognostic from predictive signal with a risk × treatment
 interaction.** **Finding**: the LM risk score is a robust *prognostic* factor in
 all 5 tumors and within every therapy stratum (log-rank p ≪ 1e-10; age+stage
-adjusted HR 1.68–2.43). Untreated strata give interaction HR ≈ 1 (pure
-prognosis); treated strata > 1 (effect modification). Read the interaction with
-the immortal-time caveat in mind.
+adjusted HR per SD 1.93–3.79, unpenalized Cox). The interaction term is
+**exploratory** and read with three caveats: (1) immortal-time bias
+(`TREATMENT_HISTORY` is post-baseline); (2) it is evaluated **case by case (per
+tumor)** — each tumor is a separate population with its own treatments, so the
+interactions are not one joint family and are not globally multiple-testing
+corrected (the cancer-specific score is the primary lens, the pan-cancer score a
+robustness check; within a tumor the few strata share the cohort, a small family
+at most); (3) **circularity** — the risk score is trained on features that
+include treatment history, so a risk×treatment interaction is partly mechanical.
+Empirically, untreated strata give interaction
+HR ≈ 1 (pure prognosis) in 4 of 5 tumors — **NSCLC is the exception** (untreated
+interaction HR ≈ 1.18, p≈8e-9); treated strata > 1 (effect modification).
+
+**Report HR/CI/p from an UNPENALIZED Cox.** *Argument*: the adjusted-HR and
+interaction models are fit with `penalizer=0.0` so the Wald CI and p-value are
+valid inference. An earlier ridge (`penalizer=0.1`) was carried over for numeric
+stability, but it shrank the HRs 13–36% toward 1 and invalidates the CI/p; once
+risk enters as `log(risk)` all 50 fits converge unpenalized (0 fallbacks), so the
+penalty is unnecessary. `cox_*` keep a stability fallback that re-adds a small
+ridge ONLY if an unpenalized fit fails to converge, and record it in a
+`penalizer` field so a penalized (non-inferential) estimate is never reported as a
+clean one.
 
 ---
 
@@ -183,7 +202,9 @@ the MSK-learned threshold transfer / ranking calibration).
   Title-Case with salt suffixes, MSK is UPPERCASE simple names). For the *tabular*
   branch, normalize with `upper()` + strip salt suffixes (HCL/liposome/…) + a
   small rename dict (e.g. `Nabpaclitaxel` → `PACLITAXEL PROTEIN-BOUND`). The
-  *embedding* branch consumes the raw text and needs no mapping.
+  normalization is applied once when building the table, so BOTH the tabular
+  features and the prompt/embedding see the normalized agent names (keeps the
+  external prompts apples-to-apples with MSK).
 - **Missing features land on the correct one-hot column.** Features with no BPC
   source are set to MSK's *own* missing token per feature (`Not available` /
   `Unknown` / NaN). In particular Smoking must be `Unknown`, not `Not available`,
@@ -214,8 +235,11 @@ defensive de-dup of the embedding index in `41_external_validate.py` (777 → 77
 **Result.** Discrimination transfers out of MSK in all 5 tumors (C-index ≥ 0.65,
 no retraining). The embedding's contribution is positive and consistent where
 Phase 1 predicted it (pancreas, prostate), ~neutral in colorectal/breast, and
-negative in NSCLC — a candidate caveat attributed to divergent gene panels (more
-out-of-vocabulary tokens). See `README.md` for the per-tumor table.
+negative in NSCLC. The cause is an open question: prompt truncation was measured
+and ruled out (MedCPT-tokenizer length: median ~125 tokens, p95 ~185, <0.2% of
+prompts exceed the 512 cap, NSCLC not an outlier), so a candidate but **untested**
+explanation is divergent gene panels → more out-of-vocabulary tokens. See
+`README.md` for the per-tumor table.
 
 ---
 

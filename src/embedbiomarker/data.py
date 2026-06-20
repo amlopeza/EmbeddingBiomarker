@@ -20,8 +20,11 @@ Design decisions:
     ``MUTATIONS`` is deterministic across runs.
   * Treatment agents keep their real repeats by default (they encode actual
     re-treatment lines); ``dedup_treatments=True`` collapses them, order-preserving.
-  * Missing values become explicit categories ("Unknown" / "Not available")
-    instead of being dropped — missingness is itself signal.
+  * Inclusion criterion: patients missing age or with NO functional mutation are
+    excluded (step 5; ~1,170 of 24,950 -> 23,777), because the prompt/embedding is
+    built around the mutation profile. For every OTHER feature, missing values
+    become explicit categories ("Unknown" / "Not available") rather than being
+    dropped — missingness there is itself signal.
 
 Expected output: 23,777 patients x 26 columns.
 """

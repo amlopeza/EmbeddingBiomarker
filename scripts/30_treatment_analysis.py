@@ -193,9 +193,16 @@ def main() -> None:
         "risk_modes": list(args.risk_modes),
         "n_splits": int(args.n_splits),
         "min_n": MIN_N, "min_events": MIN_EVENTS,
-        "caveat": ("TREATMENT_HISTORY is post-baseline (immortal-time bias); this is "
-                   "stratified prognostic validation + effect-modification probe, not a "
-                   "causal treatment-efficacy claim."),
+        "caveat": ("Stratified prognostic validation + an EXPLORATORY effect-modification "
+                   "probe, not a causal treatment-efficacy claim. Interaction caveats: "
+                   "(1) TREATMENT_HISTORY is post-baseline -> immortal-time bias; "
+                   "(2) evaluated CASE BY CASE per tumor (separate populations / "
+                   "treatments), not one joint family -> no global multiple-testing "
+                   "correction; cancer-specific score is the primary lens, pan-cancer a "
+                   "robustness check; (3) circularity -- the risk score is trained on "
+                   "features that include treatment history, so a risk x treatment "
+                   "interaction is partly mechanical. Adjusted HR/CI/p use an unpenalized "
+                   "Cox (penalizer=0.0) for valid inference."),
         "per_cancer": per_cancer,
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)

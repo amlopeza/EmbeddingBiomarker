@@ -14,9 +14,8 @@ data
 ._.DS_Store
 ._*
 CLAUDE.md
-dev 
+dev
 # Python build artifacts
 *.egg-info/
 __pycache__/
 *.pyc
-plans.md
