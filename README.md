@@ -1,7 +1,8 @@
 # EmbeddingBiomarker
 
-**A small/efficient language model as a treatment-aware prognostic feature
-extractor** on the MSK-CHORD 2024 cohort (~23,777 patients, 5 solid tumors).
+***Language-model embeddings as treatment-aware prognostic features for solid
+tumors: complementary signal, a semantic mechanism, and leakage-free external
+validation*** — on the MSK-CHORD 2024 cohort (~23,777 patients, 5 solid tumors).
 
 The model does **not** predict survival directly. Instead it turns a patient's
 leakage-safe clinical description into an embedding; that embedding (optionally
@@ -189,3 +190,10 @@ tests/        splits · no-leakage · baseline · treatment strata · external
 - No opaque artifacts: everything under `data/` is regenerated from `data/raw`
   with seeded code. `results/` is versioned; `data/` is not.
 - The tabular baseline must exist before any "serious" embedding run.
+
+## License & data use
+
+Code: **Apache-2.0** (`LICENSE`). The datasets are **not** included and keep
+their own terms — **MSK-CHORD 2024 is CC BY-NC-ND 4.0, AACR GENIE BPC is
+CC BY-NC (non-commercial)**. Any result derived from them is non-commercial.
+See [`DATA_USE.md`](DATA_USE.md).

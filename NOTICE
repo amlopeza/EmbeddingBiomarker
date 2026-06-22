@@ -1,0 +1,9 @@
+EmbeddingBiomarker
+Copyright 2026 Ana María López
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This repository contains ONLY source code and aggregate result summaries.
+It does NOT contain or redistribute the MSK-CHORD 2024 or AACR GENIE BPC
+datasets. Those datasets are obtained separately by the user and remain
+governed by their own terms — see DATA_USE.md.

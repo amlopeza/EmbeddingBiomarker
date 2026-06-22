@@ -10,6 +10,7 @@ venv/
 *.log
 data
 .venv/
+.venv_fig/
 .DS_Store
 ._.DS_Store
 ._*
@@ -19,3 +20,6 @@ dev
 *.egg-info/
 __pycache__/
 *.pyc
+paper
+skill.md
+SKILL.md
