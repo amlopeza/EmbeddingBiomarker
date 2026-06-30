@@ -225,6 +225,7 @@ def figure3():
     int_tab = internal["feature_sets"]["tab"]["c_index_per_cancer_test"]
     int_both = internal["feature_sets"]["both"]["c_index_per_cancer_test"]
     int_delta = internal["delta_per_cancer_test"]["both_minus_tab"]
+    ext_ci = json.loads((RESULTS / "external_delta_ci.json").read_text())["per_cancer"]
 
     rows = []
     for stem, ct in COHORTS.items():
@@ -232,12 +233,14 @@ def figure3():
         ft = ext["feature_sets"]["tab"]
         fb = ext["feature_sets"]["both"]
         dl = int_delta[ct]
+        ec = ext_ci[stem]
         rows.append({
             "tumor": SHORT[ct], "n": ext["external_n"],
             "f3_tab": ft["concordance"], "f3_both": fb["concordance"],
             "f1_d": int_both[ct] - int_tab[ct],
             "f1_lo": dl["ci_low"], "f1_hi": dl["ci_high"],
             "f3_d": fb["concordance"] - ft["concordance"],
+            "f3_lo": ec["ci_low"], "f3_hi": ec["ci_high"],
         })
     df = pd.DataFrame(rows)
 
@@ -273,8 +276,10 @@ def figure3():
                  xerr=[db["f1_d"] - db["f1_lo"], db["f1_hi"] - db["f1_d"]],
                  fmt="o", color=C_EMB, ms=5, lw=1.4, capsize=2.2,
                  label="internal MSK (95% CI)")
-    axB.scatter(db["f3_d"], y - 0.14, marker="s", s=42, color=C_NEG,
-                zorder=3, label="external GENIE")
+    axB.errorbar(db["f3_d"], y - 0.14,
+                 xerr=[db["f3_d"] - db["f3_lo"], db["f3_hi"] - db["f3_d"]],
+                 fmt="s", color=C_NEG, ms=5, lw=1.4, capsize=2.2,
+                 zorder=3, label="external GENIE (95% CI)")
     axB.axvline(0, ls=":", color=C_INK, lw=0.8)
     axB.set_yticks(y)
     axB.set_yticklabels(db["tumor"])
